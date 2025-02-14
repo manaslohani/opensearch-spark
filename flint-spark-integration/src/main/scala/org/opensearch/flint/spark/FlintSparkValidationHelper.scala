@@ -60,6 +60,8 @@ trait FlintSparkValidationHelper extends Logging {
    */
   def isCheckpointLocationAccessible(spark: SparkSession, checkpointLocation: String): Boolean = {
     try {
+
+      logInfo(s"creating checkpoint for checkpoint location: $checkpointLocation")
       val checkpoint = new FlintSparkCheckpoint(spark, checkpointLocation)
 
       /*
@@ -67,13 +69,16 @@ trait FlintSparkValidationHelper extends Logging {
        * during the accessibility check. The actual result is ignored, as the write
        * permission check below will create any necessary sub-folders.
        */
-      checkpoint.exists()
+      val exists = checkpoint.exists()
+      logInfo(s"Checkpoint exists check result: $exists for location: $checkpointLocation")
 
       /*
        * Write permission check: Attempt to create a temporary file to verify write access.
        * The temporary file is left in place in case additional delete permissions required.
        */
+      logInfo(s"Attempting to create temp file to verify write access in: $checkpointLocation")
       checkpoint.createTempFile().foreach(_.close())
+      logInfo(s"Successfully verified access to checkpoint location: $checkpointLocation")
 
       true
     } catch {

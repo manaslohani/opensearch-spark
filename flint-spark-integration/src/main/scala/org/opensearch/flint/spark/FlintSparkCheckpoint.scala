@@ -24,13 +24,17 @@ import org.apache.spark.sql.execution.streaming.CheckpointFileManager.RenameHelp
  *   The path to the checkpoint directory.
  */
 class FlintSparkCheckpoint(spark: SparkSession, val checkpointLocation: String) extends Logging {
-
   /** Checkpoint root directory path */
+  logInfo(s"Initializing FlintSparkCheckpoint with location: $checkpointLocation")
   private val checkpointRootDir = new Path(checkpointLocation)
+  logInfo(s"Checkpoint root directory created: $checkpointRootDir")
 
   /** Spark checkpoint manager */
   private val checkpointManager =
     CheckpointFileManager.create(checkpointRootDir, spark.sessionState.newHadoopConf())
+  logInfo(s"Created CheckpointFileManager: ${checkpointManager.getClass} with className ${checkpointManager.getClass.getName}")
+
+  logInfo(s"Hadoop configuration: ${spark.sessionState.newHadoopConf().toString}")
 
   /**
    * Checks if the checkpoint directory exists.
@@ -38,7 +42,11 @@ class FlintSparkCheckpoint(spark: SparkSession, val checkpointLocation: String) 
    * @return
    *   true if the checkpoint directory exists, false otherwise.
    */
-  def exists(): Boolean = checkpointManager.exists(checkpointRootDir)
+  def exists(): Boolean = {
+    val result = checkpointManager.exists(checkpointRootDir)
+    logInfo(s"Checking if checkpoint directory exists: $checkpointRootDir, result: $result")
+    result
+  }
 
   /**
    * Creates the checkpoint directory and all necessary parent directories if they do not already
@@ -48,7 +56,10 @@ class FlintSparkCheckpoint(spark: SparkSession, val checkpointLocation: String) 
    *   The path to the created checkpoint directory.
    */
   def createDirectory(): Path = {
-    checkpointManager.createCheckpointDirectory
+    logInfo(s"Attempting to create checkpoint directory: $checkpointRootDir")
+    val createdPath = checkpointManager.createCheckpointDirectory
+    logInfo(s"Successfully created checkpoint directory at: $createdPath")
+    createdPath
   }
 
   /**
@@ -58,10 +69,12 @@ class FlintSparkCheckpoint(spark: SparkSession, val checkpointLocation: String) 
    *   An optional FSDataOutputStream for the created temporary file, or None if creation fails.
    */
   def createTempFile(): Option[FSDataOutputStream] = {
+    logInfo(s"Attempting to create temp file at checkpoint location: $checkpointRootDir")
     checkpointManager match {
       case manager: RenameHelperMethods =>
         val tempFilePath =
           new Path(createDirectory(), s"${UUID.randomUUID().toString}.tmp")
+        logInfo(s"Attempting to create temp file: $tempFilePath")
         Some(manager.createTempFile(tempFilePath))
       case _ =>
         logInfo(s"Cannot create temp file at checkpoint location: ${checkpointManager.getClass}")

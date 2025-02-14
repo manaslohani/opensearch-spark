@@ -37,6 +37,7 @@ class IncrementalIndexRefresh(val indexName: String, index: FlintSparkIndex)
     val options = index.options
     val checkpointLocation = options.checkpointLocation()
     require(options.checkpointLocation().nonEmpty, "Checkpoint location is required")
+    logInfo(s"Checking accessibility of checkpoint location: ${checkpointLocation.get}")
     require(
       isCheckpointLocationAccessible(spark, checkpointLocation.get),
       s"No sufficient permission to access the checkpoint location ${checkpointLocation.get}")
