@@ -169,7 +169,7 @@ case class JobOperator(
       } catch {
         case t: Throwable =>
           throwableHandler.recordThrowable(
-            s"Failed to update statement. originalError='${throwableHandler.error}'",
+            s"Failed to update statement. Cause='${t.getMessage}', originalError='${throwableHandler.error}'",
             t)
       }
 
